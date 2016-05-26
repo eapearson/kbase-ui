@@ -32,15 +32,9 @@ define([
 
             function handleSignout(e) {
                 e.preventDefault();
-                runtime.service('session').logout()
-                    .then(function () {
-                        // w.setState('updated', new Date());
-                    })
-                    .catch(function (err) {
-                        console.error('ERROR');
-                        console.error(err);
-                        alert('Error signing out (check console for details)');
-                    });
+                runtime.send('app', 'navigate', {
+                    path: 'logout'
+                });               
             }
             function renderAvatar(widget) {
                 var profile = widget.get('userProfile'),

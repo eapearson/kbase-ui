@@ -12,15 +12,32 @@ source:
         -
             module: kb_widget_loginPanel
             file: login
+        -
+            module: kb_oauth2_login
+            file: oath2Login
 install:
     widgets:
         -
             module: kb_widget_loginPanel
             id: loginPanelWidget
             type: factory
+        -
+            module: kb_oauth2_login
+            id: oauth2_login
+            type: factory
+        -
+            module: plugins/login/modules/oauth2Logout
+            id: oauth2_logout
+            type: factory
     routes:
         -
             path: ['login']
-            widget: loginPanelWidget
+            # widget: loginPanelWidget
+            widget: oauth2_login
+            queryParams:
+                nextrequest: {}
+        -
+            path: ['logout']
+            widget: oauth2_logout
             queryParams:
                 nextrequest: {}

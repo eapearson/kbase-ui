@@ -89,6 +89,18 @@ define([
         function pluginHandler(pluginConfig) {
             return installRoutes(pluginConfig);
         }
+        
+        function makeUrl(url, params) {
+            var queryString;
+            if (params) {
+                queryString = Object.keys(params).map(function (key) {
+                    return [encodeURIComponent(key), encodeURIComponent(params[key])].join('=');
+                }).join('&');
+            }
+            return [url, queryString].filter(function (item) {
+                return item ? true : false;
+            }).join('?');
+        }
 
         function start() {
             runtime.recv('app', 'do-route', function () {
@@ -117,7 +129,8 @@ define([
             });
 
             runtime.recv('app', 'redirect', function (data) {
-                router.redirectTo(data.url, data.new_window || data.newWindow);
+                var url = makeUrl(data.url, data.params);
+                router.redirectTo(url, data.new_window || data.newWindow);
             });
 
             eventListeners.push({

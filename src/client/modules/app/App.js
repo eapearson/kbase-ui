@@ -227,9 +227,9 @@ define([
             // There are not too many global behaviors, and perhaps there should 
             // even fewer or none. Most behavior is within services or 
             // active widgets themselves.
-            receive('session', 'loggedout', function () {
-                send('app', 'navigate', 'goodbye');
-            });
+            //receive('session', 'loggedout', function () {
+            //    send('app', 'navigate', 'goodbye');
+            //});
 
             receive('app', 'route-not-found', function (info) {
                 // alert('help, the route was not found!: ' + route.path);
@@ -272,9 +272,7 @@ define([
                 })
                 .then(function () {
                     // kick off handling of the current route.
-                    api.service('analytics').pageView('/index');
-                    // remove the loading status.
-                    
+                    // api.service('analytics').page();
                     send('app', 'do-route');
                     return api;
                 });
