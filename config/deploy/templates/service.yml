@@ -59,15 +59,6 @@ services:
     catalog:
         url: <%= catalog_url %>
         name: Catalog
-    taxon_api:
-        url: <%= taxon_api_url %>
-        name: Taxon API
-    assembly_api:
-        url: <%= assembly_api_url %>
-        name: Assembly API 
-    genomeAnnotation_api:
-        url: <%= genome_annotation_api_url %>
-        name: Genome Annotation API
     doc_site:
         url: <%= doc_site_url %>
         name: Documentation and Support Site
