@@ -2,7 +2,7 @@
 
 This doc describes basic procedures for developing kbase-ui core and plugins using a docker image and container workflow.
 
-Docs are currently being built... the existing vm-workflow docs will be deprecated and the docker docs mainlined. 
+Docs are currently being built... the existing vm-workflow docs will be deprecated and the docker docs mainlined.
 
 ## Basic usage
 
@@ -121,6 +121,35 @@ which will stop all running containers.
 The setup for working on external plugins is very similar to that of working on kbase-ui, except that you must clone the plugins and instruct the image runner to mount the pluings
 
 [ to be done ]
+
+## Working on kbase libs
+
+The ```-l``` option supports mounting a kbase library into the container. The value passed to the option consists of three values separated by a colon (:).
+
+> We'll add a generic code mounting option soon; this one is a bit simpler because it depends up on naming conventions.
+
+<module mount point>:<library name>:<path within repo>
+
+where
+
+- <module mount point> is the top level directory within kbase-ui's modules directory from which the module is accessed
+- <library name> is the part of the repo name following kbase-; this os one of the naming conventions - kbase-ui internal library dependencies typically are prefixed with kbase- to namespace them within the global open source community
+- <path within repo> is the location within the repo of the code which should be mounted into the container.
+
+E.g., if your working directory is /working, your kbase-ui would be cloned into /working/kbase-ui and the library into /working/kbase-my-lib. Let us assume the library module mount is kb_my_lib. The command
+
+```
+bash /working/kbase-ui/deployment/dev/tools/run-image.sh dev kb_my_lib:my-lib:src
+```
+
+would mount the local host directory /working/kbase-my-lib/src into the container at /kb/deployment/services/kbase-ui/modules/kb_my_lib
+
+
+From real life:
+
+```
+bash deployment/dev/tools/run-image.sh dev -p jgi-search -p reske-search -l kb_common:common-js:dist/kb_common
+```
 
 ## More sections to be written for external plugin development
 
