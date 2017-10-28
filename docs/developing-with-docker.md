@@ -2,7 +2,7 @@
 
 This doc describes basic procedures for developing kbase-ui core and plugins using a docker image and container workflow.
 
-Docs are currently being built... the existing vm-workflow docs will be deprecated and the docker docs mainlined. 
+Docs are currently being built... the existing vm-workflow docs will be deprecated and the docker docs mainlined.
 
 ## Basic usage
 
@@ -130,6 +130,50 @@ The setup for working on external plugins is very similar to that of working on 
 - pr, merge ui changes (just config)
 - redeploy on CI
 
+## Proxying a local service
+
+For times when you have a local service or service mock and need to redirect service requests to it.
+
+The service or mock will be running locally in a docker container. You'll need to get the ip address of the container within the bridge network. Just do ifconfig or ip address list within the container.
+
+You can do this setup manually, but it will be destroyed when the ui container is rebuilt (or when??)
+
+For live setup:
+
+### Within the ui container:
+
+- edit /kb/deployment/services/kbase-ui/modules/config/config.json
+- For a dynamic service, add a services stanza for the service which routes to your service. The path from the base can be anything, as long as it matches what you next set up in the nginx config. However, it is nice to use a service-style path:
+
+```json
+       "jgi_gateway_eap": {
+            "url": "{{ deploy.services.urlBase }}/services/jgi_gateway_eap/rpc"
+       }
+```
+
+- Add a proxy setting for this new path to the nginx config, /etc/nginx/nginx.conf
+
+```nginx
+      location /devservices/jgi_gateway_eap/rpc {
+          proxy_pass http://172.17.0.3:81/rpc;
+      }
+```
+
+- Reload nginx gently. Since it the nginx process is blocking the container (preventing it from exiting) we don't want to start and restart nginx.
+
+```bash
+pkill -HUP -x "nginx: master process nginx"
+```
+
+### For a dev session:
+
+> TODO: yes, this is next.
+
+- for dynamic services, add a service stanza to the services.yml
+
+- rebuild the image
+-
+
 ## Other handy dockerisms
 
 
@@ -156,6 +200,9 @@ docker rmi -f $(docker images -q)
 
 docker exec -i -t <containerid> /bin/bash
 
+
 e.g.
+
+docker exec -i -t $(docker ps -f "ancestor=kbase/kbase-ui:dev" -q) /bin/bash
 
 docker exec -i -t $(docker ps -q) /bin/bash
