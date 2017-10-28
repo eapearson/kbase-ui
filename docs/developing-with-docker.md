@@ -183,6 +183,12 @@ docker stop $(docker ps -q)
 
 > If you just have one running container, it just stops that one.
 
+or
+
+docker stop $(docker ps -f "ancestor=kbase/kbase-ui:dev" -q) /bin/bash
+
+which stops ui dev containers
+
 ### Stop all containers
 
 docker stop $(docker ps -aq)
