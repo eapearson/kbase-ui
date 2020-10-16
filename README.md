@@ -83,25 +83,25 @@ curl -fsSL https://github.com/rbenv/rbenv-installer/raw/master/bin/rbenv-doctor 
 Install a version of ruby:
 
 ```zsh
-rbenv install 2.7.0
+rbenv install 2.7.1
 ```
 
 If you want to use this ruby version permanently,
 
 ```zsh
-rbenv global 2.7.0
+rbenv global 2.7.1
 ```
 
 for this project
 
 ```zsh
-rbenv local 2.7.0
+rbenv local 2.7.1
 ```
 
 for the shell session only
 
 ```zsh
-rbenv local 2.7.0
+rbenv local 2.7.1
 ```
 
 Although `bundler` may be installed with Ruby with rbenv, it is best to just install it from scratch to get the most recent version (at present we need version 2).
@@ -128,7 +128,7 @@ gpg2 --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D69
 ###### Install ruby
 
 ```zsh
-rvm install 2.7.0
+rvm install 2.7.1
 ```
 
 This will take a while. It is possible that you'll need to install macOS developer tools like XCode, macports, or homebrew. I use macports, and the install does conduct a macports update.
@@ -173,7 +173,7 @@ Now you are ready to start up a local copy of the documentation site. This is ac
     bundle exec jekyll serve --livereload
     ```
 
-- take your browser to [https://localhost:4000](https://localhost:4000).
+- take your browser to [http://localhost:4000](http://localhost:4000).
 
 - You should see the `kbase-ui-docs` site in full glory.
 

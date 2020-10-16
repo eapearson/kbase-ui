@@ -51,6 +51,14 @@ navigation:
         - label: Image Testing
     - label: Plugin Development
     - label: Deployment
+      menu:
+        - label: Codebase Checklist
+        - label: Release Notes
+        - label: Integration Tests
+        - label: Create Release
+        - label: Verification Deployment
+        - label: Scheduling Deployment
+        - label: Post Deployment Communication
     - label: Architecture
       menu:
         - label: Status
