@@ -1,0 +1,12 @@
+# Version File for kbase-ui
+# This file should always contain the version, in semver 2.0 format, which matches
+# the current tag for this commit, if the kbase-ui build type is "prod".
+# Typically a release is arranged by merging the develop branch to master,
+# and then tagging the master branch with the same version found in this file, but
+# prefixed with a "v". In github, we use the release tool to do this, which triggers
+# a travis build using the "prod" build type, which compares this version to the
+# git tag. The build will fail if they do not match.
+# For dev builds (dev and ci) the version will not be checked.
+---
+release:
+  version: NEXT

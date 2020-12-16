@@ -1,22 +1,48 @@
 # package caches wherever they may be installed
-bower_components
 node_modules
 
-# General purpose temp directory
-/temp
+# Any trash directories
+_trash/
+_attic/
 
 # IDEs
-# put your ide here 
-/nbproject
+# put your ide here
+.idea
+
+# OS artifacts
+.DS_Store
 
 # Build artifacts
 /build/dist
 /build/build
 /build/build-test-coverage
+/build/test
+/build/deploy
 /mutations/mutantfiles
+report.*.json
 
 # Developer artifacts
+/dev/docker-compose.override.yml
+/dev/gitlab-config
+/dev/test-config.json
 /dev/temp
-/dev/config
 /dev/test
-/dev/test-coverage
+yarn.lock
+
+# General purpose temp directory
+/temp/*
+!/temp/README.md
+
+docker-compose.override.yml
+        
+/tools/proxy/contents/ssl/*
+!/tools/proxy/contents/ssl/README.md
+
+# can be left over with a manual npm install with --no-cache (I think)
+/false
+
+# working files when doing gh-pages work
+/_site
+
+# A handy directory for staching non-commitable working files
+/_todo

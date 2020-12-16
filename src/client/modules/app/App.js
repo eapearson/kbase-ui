@@ -1,275 +1,190 @@
-/*global define */
-/*jslint
- white: true, browser: true
- */
+/*
+    App, along with main.js, are the heart of the the hub web app.
+    Apps primary responsibilities are:
+    - process plugins
+    - create, start and populate services
+    - create a simple communication bus
+    - provide runtime api for config, services, and comm
+*/
 define([
-    'kb/common/pluginManager',
-    'kb/common/dom',
-    'kb/common/messenger',
-    'kb/widget/widgetMount',
-    'kb/common/props',
-    'kb/common/asyncQueue',
-    'kb/common/appServiceManager'
-], function (
-    pluginManagerFactory,
-    dom,
-    messengerFactory,
-    widgetMountFactory,
-    props,
-    asyncQueue,
-    AppServiceManager
-    ) {
-    'use strict';
+    'preact',
+    'htm',
+    'lib/pluginManager',
+    'lib/appServiceManager',
+    'lib/kbaseServiceManager',
+    './runtime',
+    'lib/messenger',
+    'reactComponents/MainWindow/view'
+], (
+    preact,
+    htm,
+    {PluginManager},
+    {AppServiceManager},
+    kbaseServiceManager,
+    {Runtime},
+    {Messenger},
+    MainWindow
+) => {
+    const html = htm.bind(preact.h);
 
-    var moduleVersion = '0.0.1';
+    // TODO: make this configurable.
+    const CHECK_CORE_SERVICES = false;
 
-    function factory(cfg) {
-        var config = cfg,
-            pluginManager,
-            serviceConfig = cfg.serviceConfig,
-            clientConfig = cfg.clientConfig,
-            clientConfigProps = props.make({data: clientConfig});
+    /*
+    App
+    The app is the primary runtime for the entire system. It provides a
+    core set of features, including communication, plugins, configuration,
+    fallback error handling, and a simple set of predefined root nodes.
+    The rest of the web app is crafted out of the plugins which are loaded
+    from the configuration.
+    Much of what plugin loading involves is interation with services, which is
+    usually literally providing a configuration object to the service and allowing
+    the service to do its thing.
+    This makes for a very small core, in which nearly all of the functionality is
+    provided by plugins and services.
 
-        // quick hack:
-        clientConfig.services = serviceConfig.services;
+    The config object looks like this:
+    TODO: add a json spec for it.
 
-        function getConfig(prop, defaultValue) {
-            return clientConfigProps.getItem(prop, defaultValue);
+    appConfig -
+    plugins -
+    nodes -
+
+    appConfig
+    at the heart of the configurability of the app is the appConfig. This is a
+    plain JS object containing
+
+    nodes
+    {
+        root: {
+            selector: <string>
         }
-        function hasConfig(prop) {
-            return clientConfigProps.hasItem(prop);
-        }
-
-        // Events
-
-        // Our own events
-        var messenger = messengerFactory.make();
-        function receive(channel, message, fun) {
-            return rcv({
-                channel: channel,
-                message: message,
-                handler: fun
-            });
-        }
-        function rcv(spec) {
-            return messenger.receive(spec);
-        }
-        function drop(spec) {
-            urcv(spec);
-        }
-        function urcv(spec) {
-            return messenger.unreceive(spec);
-        }
-        function send(channel, message, data) {
-            return snd({
-                channel: channel,
-                message: message,
-                data: data
-            });
-        }
-        function snd(spec) {
-            return messenger.send(spec);
-        }
-        function sendp(channel, message, data) {
-            return messenger.sendPromise({
-                channel: channel,
-                message: message,
-                data: data
-            });
-        }
-
-        // Plugins
-        function installPlugins(plugins) {
-            console.log('installing plugins');
-            console.log(plugins);
-            return pluginManager.installPlugins(plugins);
-        }
-
-        // Services for plugins
-
-        var rootNode;
-        function setRootNode(selector) {
-            rootNode = dom.qs(selector);
-            if (!rootNode) {
-                throw new Error('Cannot set root node for selector ' + selector);
-            }
-
-        }
-        setRootNode(config.nodes.root.selector);
-
-        var rootMount;
-        function mountRootWidget(widgetId, runtime) {
-            if (!rootNode) {
-                throw new Error('Cannot set root widget without a root node');
-            }
-            if (!rootMount) {
-                // create the root mount.
-                rootMount = widgetMountFactory.make({
-                    node: rootNode,
-                    runtime: runtime
-                });
-
-            }
-            // ask it to load a widget.
-            return rootMount.mountWidget(widgetId);
-        }
-
-        var renderQueue = asyncQueue.make();
-
-        var appServiceManager = AppServiceManager.make();
-
-        function proxyMethod(obj, method, args) {
-            if (!obj[method]) {
-                throw {
-                    name: 'UndefinedMethod',
-                    message: 'The requested method "' + method + '" does not exist on this object',
-                    suggestion: 'This is a developer problem, not your fault'
-                };
-            }
-            return obj[method].apply(obj, args);
-        }
-
-        var api = {
-            getConfig: getConfig,
-            config: getConfig,
-            hasConfig: hasConfig,
-            // Session
-            installPlugins: installPlugins,
-            send: send,
-            sendp: sendp,
-            recv: receive,
-            drop: drop,
-            snd: snd,
-            rcv: rcv,
-            urcv: urcv,
-            // Services
-            addService: function () {
-                return proxyMethod(appServiceManager, 'addService', arguments);
-            },
-            loadService: function () {
-                return proxyMethod(appServiceManager, 'loadService', arguments);
-            },
-            getService: function () {
-                return proxyMethod(appServiceManager, 'getService', arguments);
-            },
-            service: function () {
-                return proxyMethod(appServiceManager, 'getService', arguments);
-            },
-            hasService: function () {
-                return proxyMethod(appServiceManager, 'hasService', arguments);
-            },
-            dumpServices: function () {
-                return proxyMethod(appServiceManager, 'dumpServices', arguments);
-            }
-        };
-
-
-        function begin() {
-            // Register service handlers.
-            appServiceManager.addService('session', {
-                runtime: api,
-                cookieName: 'kbase_session',
-                extraCookieNames: ['kbase_narr_session'],
-                loginUrl: serviceConfig.services.login.url,
-                cookieMaxAge: clientConfig.ui.constants.session_max_age
-
-            });
-            appServiceManager.addService('heartbeat', {
-                runtime: api,
-                interval: 500
-            });
-            appServiceManager.addService('route', {
-                runtime: api,
-                notFoundRoute: {redirect: {path: 'message/notfound'}},
-                defaultRoute: {redirect: {path: 'dashboard'}}
-            });
-            appServiceManager.addService('menu', {
-                runtime: api,
-                menus: cfg.menus
-            });
-            appServiceManager.addService('widget', {
-                runtime: api
-            });
-            appServiceManager.addService('service', {
-                runtime: api
-            });
-            appServiceManager.addService('data', {
-                runtime: api
-            });
-            appServiceManager.addService('type', {
-                runtime: api
-            });
-            appServiceManager.addService('userprofile', {
-                runtime: api
-            });
-
-            pluginManager = pluginManagerFactory.make({
-                runtime: api
-            });
-
-            // Behavior
-
-            receive('session', 'loggedout', function () {
-                send('app', 'navigate', 'goodbye');
-            });
-
-            // UI should be a service...
-
-
-            receive('ui', 'render', function (arg) {
-                renderQueue.addItem({
-                    onRun: function () {
-                        if (arg.node) {
-                            arg.node.innerHTML = arg.content;
-                        } else {
-                            console.log('ERROR');
-                            console.log('Invalid node for ui/render');
-                        }
-                    }
-                });
-
-            });
-
-            // ROUTING
-
-            return appServiceManager.loadServices()
-                .then(function () {
-                    console.log('Services loaded');
-                    return installPlugins(config.plugins);
-                })
-                .then(function () {
-                    console.log('Root widget mounted');
-                    return appServiceManager.startServices();
-                })
-                .then(function () {
-                    console.log('Plugins installed');
-                    return mountRootWidget('root', api);
-                })
-                .then(function () {
-                    // getService('heartbeat').start();
-                    console.log('Services started.');
-                    // this is a hack for now ... should be a method for service
-                    // events to be sent out post root widget mounting.
-                    if (appServiceManager.getService('session').isLoggedIn()) {
-                        send('session', 'loggedin');
-                    } else {
-                        send('session', 'loggedout');
-                    }
-                    send('app', 'do-route');
-                    return api;
-                });
-        }
-        return {
-            begin: begin
-        };
     }
-    return {
-        run: function (config) {
-            var runtime = factory(config);
-            return runtime.begin();
-        },
-        version: function () {
-            return moduleVersion;
+
+    */
+
+    return class App {
+        constructor(params) {
+            this.plugins = params.plugins;
+            this.services = params.services;
+            this.nodes = params.nodes;
+
+
+            // The entire ui (from the app's perspective) hinges upon a single
+            // root node, which must already be established by the
+            // calling code. If this node is absent, we simply fail here.
+            this.rootNode = document.querySelector(this.nodes.root.selector);
+            if (!this.rootNode) {
+                throw new Error('Cannot set root node for selector ' + this.nodes.root.selector);
+            }
+
+            // Events
+
+            // Our own event system.
+            this.messenger = new Messenger();
+
+            // DOM
+
+            this.rootMount = null;
+
+            // SERVICES
+            this.appServiceManager = new AppServiceManager({
+                moduleBasePath: 'app/services'
+            });
+
+            this.runtime = new Runtime({
+                config: params.appConfig,
+                messenger: this.messenger,
+                serviceManager: this.appServiceManager
+            });
+
+            this.pluginManager = new PluginManager({
+                runtime: this.runtime
+            });
+
+            this.addServices(this.services);
         }
+
+        mountRootComponent() {
+            const props = {
+                runtime: this.runtime
+            };
+            const content = html`
+                <${MainWindow} ...${props} />
+            `;
+            preact.render(content, this.rootNode);
+        }
+
+        addServices(services) {
+            Object.keys(services).forEach((serviceName) => {
+                // A service which is just declared may not have any configuration
+                // at all.
+                const serviceConfig = JSON.parse(JSON.stringify(services[serviceName]));
+                const service = {
+                    name: serviceName
+                };
+                service.module = serviceName;
+
+                this.appServiceManager.addService(service, serviceConfig);
+            });
+        }
+
+        checkCoreServices() {
+            const manager = new kbaseServiceManager.KBaseServiceManager({
+                runtime: this.runtime
+            });
+            return manager.check();
+        }
+
+        start() {
+            this.messenger.receive({
+                channel: 'app',
+                message: 'route-not-found',
+                handler: (info) => {
+                    this.messenger.send({
+                        channel: 'app',
+                        message: 'navigate',
+                        payload: {
+                            path: 'message/error/notfound',
+                            params: {
+                                info: JSON.stringify(info)
+                            },
+                            replace: true
+                        }
+                    });
+                }
+            });
+
+            return this.appServiceManager
+                .loadServices({
+                    runtime: this.runtime
+                })
+                .then(() => {
+                    if (CHECK_CORE_SERVICES) {
+                        return this.checkCoreServices();
+                    }
+                })
+                .then(() => {
+                    return this.appServiceManager.startServices({
+                        only: ['session']
+                    });
+                })
+                .then(() => {
+                    return this.appServiceManager.startServices({
+                        except: ['session']
+                    });
+                })
+                .then(() => {
+                    return this.pluginManager.installPlugins(this.plugins);
+                })
+                .then(() => {
+                    return this.mountRootComponent();
+                })
+                .then(() => {
+                    return this.runtime;
+                });
+        }
+
+        stop() {}
     };
 });
