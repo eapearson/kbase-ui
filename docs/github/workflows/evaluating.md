@@ -239,7 +239,7 @@ After merging a PR from `develop` to `main` (or legacy `master`), we expect test
 ## Manual workflow run
 
 1. In your local repo, create a branch and push it to the fork
-   1. The branch can be named anything, in this example it is "feature-SAM-238"
+   1. The branch can be named anything, in this example it is "feature-UIP-6"
    2. You can of course use existing branches `develop` or `main` (or legacy `master`)
    
 2. Visit the forked repo
