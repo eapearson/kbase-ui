@@ -36,7 +36,7 @@ function mergePlugins(root, config, args) {
             };
         });
 
-        plugins.forEach(({pluginName, repoSuffix}) => {
+        plugins.forEach(({ pluginName, repoSuffix }) => {
             const pluginRoot = root + '/../kbase-ui-plugin-' + repoSuffix;
             let pluginDir = pluginRoot + '/dist/plugin';
 
@@ -167,6 +167,12 @@ function mergeLocalNarrative(root, config, args) {
     }
 }
 
+function mergeLocalNavigator(root, config, args) {
+    if (args.local_navigator) {
+        config.services['kbase-ui-proxy'].environment.push('local_navigator=true');
+    }
+}
+
 function mergeLocalTests(root, config) {
     config.services['kbase-ui'].volumes.push({
         type: 'volume',
@@ -216,12 +222,14 @@ function main(args) {
 
     mergeLocalNarrative(root, config, args);
 
+    mergeLocalNavigator(root, config, args);
+
     mergeConfig(root, config, args);
 
     mergeLocalTests(root, config, args);
 
     const outputPath = [root, 'dev', 'docker-compose.override.yml'].join('/');
-    fs.writeFileSync(outputPath, yaml.safeDump(config));
+    fs.writeFileSync(outputPath, yaml.dump(config));
 }
 
 main(yargs.parse(process.argv.slice(2)));

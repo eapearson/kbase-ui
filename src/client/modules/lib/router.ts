@@ -1,8 +1,6 @@
-
-import { isJSONObject, JSONObject } from "./kb_lib/json";
-import { CustomError } from "./kb_lib/Utils";
-import { SimpleMap } from "./types";
-
+import {isJSONObject, JSONObject} from "./kb_lib/json";
+import {CustomError} from "./kb_lib/Utils";
+import {SimpleMap} from "./types";
 
 
 export interface NotFoundExceptionParams {
@@ -19,8 +17,9 @@ export class NotFoundException extends CustomError {
     // path: Array<string>;
     params: any;
     request: RoutingRequest;
+
     // request: any;
-    constructor({ params, message, request }: NotFoundExceptionParams) {
+    constructor({params, message, request}: NotFoundExceptionParams) {
         super(message);
         // this.original = original;
         // this.path = path;
@@ -31,14 +30,15 @@ export class NotFoundException extends CustomError {
 }
 
 export class NotFoundNoHashException extends CustomError {
-    constructor({ message }: { message: string; }) {
+    constructor({message}: { message: string; }) {
         super(message);
     }
 }
 
 export class NotFoundHasRealPathException extends CustomError {
     realPath: Array<string>;
-    constructor({ message, realPath }: { message: string, realPath: Array<string>; }) {
+
+    constructor({message, realPath}: { message: string, realPath: Array<string>; }) {
         super(message);
         this.realPath = realPath;
     }
@@ -46,7 +46,8 @@ export class NotFoundHasRealPathException extends CustomError {
 
 export class RedirectException extends CustomError {
     url: string;
-    constructor({ url }: { url: string; }) {
+
+    constructor({url}: { url: string; }) {
         super('Redirecting');
         this.url = url;
     }
@@ -65,14 +66,6 @@ function parseQueryString(s: string) {
         }
     });
     return params;
-}
-
-function paramsToQuery(params: SimpleMap<string>) {
-    return Object.keys(params)
-        .map((key) => {
-            return key + '=' + encodeURIComponent(params[key]);
-        })
-        .join('&');
 }
 
 function getQuery() {
@@ -110,7 +103,7 @@ type Params = SimpleMap<string>;
 
 // type PathSpecString = string;
 // type PathSpecObject = {
-//     type: string; 
+//     type: string;
 //     name?: string;
 //     queryParams?: SimpleMap<string>; // not really
 //     reentrant?: boolean;
@@ -304,6 +297,7 @@ export class Router {
     defaultLocation: RoutingLocation;
     runtime: any;
     urls: SimpleMap<string>;
+
     constructor(config: RouterParams) {
         if (!config.defaultLocation) {
             throw new Error('The defaultLocation must be provided');
@@ -434,7 +428,7 @@ export class Router {
         }, {});
     }
 
-    addRoute(routeSpec: RouteSpec, { pluginName, mode }: RouteOptions) {
+    addRoute(routeSpec: RouteSpec, {pluginName, mode}: RouteOptions) {
         if (typeof routeSpec.params === 'undefined') {
             routeSpec.params = {};
         }
@@ -574,7 +568,7 @@ export class Router {
         return {
             realPath,
             path,
-            original: hashPath,
+            original: hash,
             query
         };
     }
@@ -721,7 +715,7 @@ export class Router {
             const params = this.matchPath(path, route);
 
             if (params) {
-                return { route, params };
+                return {route, params};
             }
         }
         return null;
@@ -811,7 +805,7 @@ export class Router {
             }
         }
 
-        const { route, params } = (() => {
+        const {route, params} = (() => {
             const result = this.processPath(request.path);
             if (result !== null) {
                 return result;
@@ -843,7 +837,6 @@ export class Router {
                     value
                 };
             });
-
         }
 
         return {
@@ -857,77 +850,7 @@ export class Router {
         });
     }
 
-    // navigateToPath(location: Location) {
-    //     let providedPath, queryString, finalPath;
-    //     if (typeof location.path === 'string') {
-    //         providedPath = location.path.split('/');
-    //     } else if (typeof location.path === 'object' && typeof location.path.push === 'function') {
-    //         providedPath = location.path;
-    //     } else {
-    //         console.error(
-    //             'Invalid path in location',
-    //             typeof location.path,
-    //             location.path instanceof Array,
-    //             JSON.parse(JSON.stringify(location))
-    //         );
-    //         throw new Error('Invalid path in location');
-    //     }
-    //     // we eliminate empty path components, like extra slashes, or an initial slash.
-    //     const normalizedPath = providedPath
-    //         .filter((element) => {
-    //             if (!element || typeof element !== 'string') {
-    //                 return false;
-    //             }
-    //             return true;
-    //         })
-    //         .join('/');
-    //     if (location.params) {
-    //         queryString = paramsToQuery(location.params);
-    //     }
-    //     // Oops, may be provided as "query" property
-    //     if (location.query) {
-    //         queryString = paramsToQuery(location.query);
-    //     }
-    //     if (queryString) {
-    //         finalPath = normalizedPath + '?' + queryString;
-    //     } else {
-    //         finalPath = normalizedPath;
-    //     }
-    //     if (location.external) {
-    //         finalPath = '/' + finalPath;
-    //         if (location.replace) {
-    //             this.replacePath(finalPath);
-    //         } else {
-    //             // We need to blow away the whole thing, since there will
-    //             // be a hash there.
-    //             window.location.href = finalPath;
-    //         }
-    //     } else {
-    //         if (location.replace) {
-    //             this.replacePath('#' + finalPath);
-    //         } else {
-    //             if (location.urlPath) {
-    //                 const url = new URL(window.location.toString());
-    //                 url.hash = '#' + finalPath;
-    //                 url.pathname = location.urlPath;
-    //                 window.location.assign(url.toString());
-    //             } else {
-    //                 const url = new URL(window.location.toString());
-    //                 url.hash = '#' + finalPath;
-    //                 url.pathname = '';
-    //                 window.location.assign(url.toString());
-    //             }
-    //         }
-    //     }
-    // }
-
     navigateTo(location: RoutingLocation) {
-        // if (!location) {
-        //     location = this.defaultRoute;
-        // }
-        // if (typeof location === 'string') {
-        //     location = { path: location };
-        // }
         switch (location.type) {
             case 'internal':
                 this.navigateInternal(location);
@@ -935,14 +858,6 @@ export class Router {
             case 'external':
                 this.navigateExternal(location, location.newWindow || false);
         }
-
-        // if (location.path !== undefined) {
-        //     this.navigateToPath(location);
-        // } else if (typeof location.redirect === 'string') {
-        //     this.redirectTo(location.redirect);
-        // } else {
-        //     throw new Error('Invalid navigation location -- no path');
-        // }
     }
 
     navigateInternal(location: InternalRoutingLocation) {

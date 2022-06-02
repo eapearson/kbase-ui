@@ -45,19 +45,19 @@ class FeedsService {
                 return;
             }
 
-            // if logged in, populate and start monitoring for feeds notifications
-            if (this.runtime.service('session').getAuthToken()) {
-                return this.startFeedsMonitoring();
-            }
-
             // listen for login and out events...
             this.runtime.receive('session', 'loggedin', () => {
                 this.startFeedsMonitoring();
             });
 
             this.runtime.receive('session', 'loggedout', () => {
-                this.stopFeedsMonitoring();
+                                this.stopFeedsMonitoring();
             });
+
+            // if logged in, populate and start monitoring for feeds notifications
+            if (this.runtime.service('session').getAuthToken()) {
+                return this.startFeedsMonitoring();
+            }
         });
     }
 
@@ -87,10 +87,11 @@ class FeedsService {
             });
             return feedsClient.getUnseenNotificationCount()
                 .then(({ unseen: { global, user } }) => {
+
                     const currentUnseen = global + user;
+
                     // are notifications different than the last time?
                     const unseenNotificationsCount = this.runtime.db().get('feeds.unseenNotificationsCount', 0);
-                    // only way is a deep equality comparison
 
                     if (unseenNotificationsCount === currentUnseen) {
                         return;

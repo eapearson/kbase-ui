@@ -1,6 +1,6 @@
-import { PluginConfig, PluginDefinition, Service, ServiceConfig } from '../../lib/types';
-import { StateMachine } from '../../lib/kb_lib/StateMachine';
-import { stache, tryPromise } from '../../lib/kb_lib/Utils';
+import {Service, ServiceConfig} from '../../lib/types';
+import {StateMachine} from '../../lib/kb_lib/StateMachine';
+import {stache, tryPromise} from '../../lib/kb_lib/Utils';
 
 interface MenuSystem {
     menuItems: Map<string, MenuItemDefinition>,
@@ -11,6 +11,7 @@ interface MenuItemDefinitionBase {
     type: string;
     name: string;
     label: string;
+    tooltip?: string;
     icon: string;
     auth?: boolean;
     newWindow?: boolean;
@@ -63,6 +64,7 @@ interface MenuItemConfig {
     allow?: Array<string>;
     disabled?: boolean;
     beta?: boolean;
+    tooltip?: string;
 }
 
 interface MenuConstructorConfig {
@@ -75,7 +77,7 @@ export class MenuService extends Service<MenuServiceConfig> {
     // menus: MenuConfig;
     state: StateMachine<MenuSystem>;
 
-    constructor({ config: { menus } }: MenuConstructorConfig) {
+    constructor({config: {menus}}: MenuConstructorConfig) {
         super();
         // this.menus = menus;
         this.state = new StateMachine<MenuSystem>({
@@ -99,17 +101,17 @@ export class MenuService extends Service<MenuServiceConfig> {
             // TODO: filter menu items.
             const menuDef = state.menuItems.get(menuItem.id);
             if (!menuDef) {
-                // console.warn('Menu definition not found', menuItem, Array.from(state.menuItems));
                 return;
             }
 
-            // The ui's menu config can ovveride certain properties of the 
+            // The ui's menu config can override certain properties of the
             // plugin's menu definition
             menuDef.auth = menuDef.auth || menuItem.auth;
+            menuDef.tooltip = menuDef.tooltip || menuItem.tooltip;
             return menuDef;
         })
             .filter((possibleMenuItem) => {
-                return possibleMenuItem ? true : false;
+                return !!possibleMenuItem;
             });
     }
 
@@ -134,7 +136,11 @@ export class MenuService extends Service<MenuServiceConfig> {
     }
 
     // Plugin interface
-    pluginHandler(serviceConfig: MenuServiceConfig, pluginDef: PluginDefinition, pluginConfig: PluginConfig) {
+    pluginHandler(
+        serviceConfig: MenuServiceConfig,
+        type: 'applet' | 'plugin',
+        name: string
+    ) {
         if (!serviceConfig) {
             return;
         }
@@ -147,7 +153,10 @@ export class MenuService extends Service<MenuServiceConfig> {
                     menuItem.type = 'internal';
                 }
                 if (menuItem.type === 'internal') {
-                    menuItem.path = stache(menuItem.path, new Map<string, string>([['plugin', pluginConfig.package.name]]));
+                    menuItem.path = stache(menuItem.path, new Map<string, string>([
+                        ['name', name],
+                        ['plugin', name]
+                    ]));
                 }
                 this.addMenuItem(menuItem);
             });
@@ -167,6 +176,6 @@ export class MenuService extends Service<MenuServiceConfig> {
     stop() {
         return Promise.resolve();
     }
-};
+}
 
 export const ServiceClass = MenuService;

@@ -1,12 +1,19 @@
 # RELEASE NOTES INDEX
 
-> Note: 1.5.0 is the first version with release notes
-
-> Note: 1.5.0 is the first release with a version
-
 | Version                           | Date       | Notes               |
 | --------------------------------- | ---------- | ------------------- |
-| [NEXT](RELEASE_NOTES_NEXT.md)     | 2020-XX-XX |                     |
+| [2.6.3](RELEASE_NOTES_2.6.3.md)   | 2022-04-28 |                     |
+| [2.6.2](RELEASE_NOTES_2.6.2.md)   | 2022-03-16 |                     |
+| [2.6.1](RELEASE_NOTES_2.6.1.md)   | 2022-02-25 |                     |
+| [2.6.0](RELEASE_NOTES_2.6.0.md)   | 2022-02-25 |                     |
+| [2.5.3](RELEASE_NOTES_2.5.3.md)   | 2022-01-19 |                     |
+| [2.5.2](RELEASE_NOTES_2.5.2.md)   | 2021-10-12 |                     |
+| [2.5.1](RELEASE_NOTES_2.5.1.md)   | 2021-09-16 |                     |
+| [2.5.0](RELEASE_NOTES_2.5.0.md)   | 2021-07-12 |                     |
+| [2.3.2](RELEASE_NOTES_2.3.2.md)   | 2021-05-12 |                     |
+| [2.3.1](RELEASE_NOTES_2.3.1.md)   | 2021-01-13 |                     |
+| [2.3.0](RELEASE_NOTES_2.3.0.md)   | 2021-01-12 |                     |
+| [2.2.2](RELEASE_NOTES_2.2.2.md)   | 2020-12-16 |                     |
 | [2.2.1](RELEASE_NOTES_2.2.1.md)   | 2020-11-03 |                     |
 | [2.2.0](RELEASE_NOTES_2.2.0.md)   | 2020-10-15 |                     |
 | [2.1.12](RELEASE_NOTES_2.1.12.md) | 2020-09-18 |                     |
@@ -72,3 +79,5 @@
 | 1.2.0                             | 2016-04-20 |                     |
 | 1.1.0                             | 2016-03-03 |                     |
 | 1.0.0                             | 2016-02-24 |                     |
+
+> Note: 1.5.0 is the first version with release notes

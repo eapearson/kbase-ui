@@ -14,7 +14,6 @@ _attic/
 
 # Build artifacts
 /build/dist
-/build/build
 /build/build-test-coverage
 /build/test
 /build/deploy
@@ -34,7 +33,7 @@ yarn.lock
 !/temp/README.md
 
 docker-compose.override.yml
-        
+
 /tools/proxy/contents/ssl/*
 !/tools/proxy/contents/ssl/README.md
 
@@ -46,3 +45,9 @@ docker-compose.override.yml
 
 # A handy directory for staching non-commitable working files
 /_todo
+
+# IDE
+
+.vscode/dryrun.log
+.vscode/targets.log
+.vscode/configurationCache.log

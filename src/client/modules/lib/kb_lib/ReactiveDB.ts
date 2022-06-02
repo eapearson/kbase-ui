@@ -7,16 +7,16 @@ interface Query {
     filter: (value: any) => boolean;
 }
 
-interface Subscriptions {
+interface Subscription {
     query: Query;
-    callback: () => void;
+    callback: (value: any) => void;
     lastValue: any;
     errorCount: number;
 }
 
 export class ReactiveDB {
     db: Props;
-    subscriptions: Map<string, any>;
+    subscriptions: Map<string, Subscription>;
     queries: Map<string, Query>;
     timer: number | null;
     timerInterval: number;
@@ -28,12 +28,12 @@ export class ReactiveDB {
         this.timerInterval = 100;
     }
 
-    runOnce() {
+    runOnce(): void {
         if (this.timer) {
             return;
         }
 
-        if (Object.keys(this.subscriptions).length === 0) {
+        if (this.subscriptions.size === 0) {
             return;
         }
 
@@ -55,28 +55,27 @@ export class ReactiveDB {
         return query.filter(dbValue);
     }
 
-    runSubscriptions() {
+    runSubscriptions(): void {
         this.subscriptions.forEach((subscription) => {
             try {
                 const dbValue = this.runQuery(subscription.query);
                 if (typeof dbValue === 'undefined') {
                     return;
                 }
-
                 if (typeof subscription.lastValue !== 'undefined') {
                     // TODO: this is pure object equality; but if the
                     // query returns a new collection (via the filter)
                     // we need to do a shallow comparison.
                     if (!isEqual(subscription.lastValue, dbValue)) {
                         subscription.lastValue = dbValue;
-                        subscription.fun(dbValue);
+                        subscription.callback(dbValue);
                     }
                 } else {
                     subscription.lastValue = dbValue;
-                    subscription.fun(dbValue);
+                    subscription.callback(dbValue);
                 }
             } catch (ex) {
-                console.error('Error running subscription.');
+                console.error('Error running subscription: ', ex);
                 subscription.errorCount += 1;
             }
         });
@@ -98,7 +97,7 @@ export class ReactiveDB {
             query,
             callback,
             errorCount: 0,
-            lastValue: undefined
+            lastValue: undefined,
         };
         const id = uniqueId();
         this.subscriptions.set(id, subscription);
@@ -119,4 +118,3 @@ export class ReactiveDB {
         return this.db.getRaw();
     }
 }
-

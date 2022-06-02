@@ -1,7 +1,7 @@
 interface QueueItem {
     id: number;
     callback: () => void;
-    errorCallback?: (error: Error) => void;
+    errorCallback?: (error: any) => void;
 }
 
 export default class AsyncQueue {
@@ -9,14 +9,15 @@ export default class AsyncQueue {
     queuePauseTime: number;
     itemId: number;
     timer: number | null;
-    constructor({ queuePauseTime }: { queuePauseTime?: number; } = {}) {
+    constructor({ queuePauseTime }: { queuePauseTime?: number } = {}) {
         this.queue = [];
-        this.queuePauseTime = typeof queuePauseTime === 'undefined' ? 0 : queuePauseTime;
+        this.queuePauseTime =
+            typeof queuePauseTime === 'undefined' ? 0 : queuePauseTime;
         this.itemId = 0;
         this.timer = null;
     }
 
-    processQueue() {
+    processQueue(): void {
         const item = this.queue.shift();
         if (item) {
             try {
@@ -33,31 +34,31 @@ export default class AsyncQueue {
         }
     }
 
-    start() {
+    start(): void {
         this.timer = window.setTimeout(() => {
             this.processQueue();
         }, this.queuePauseTime);
     }
 
-    stop() {
+    stop(): void {
         if (this.timer !== null) {
             window.clearTimeout(this.timer);
         }
         this.timer = null;
     }
 
-    nextItemId() {
+    nextItemId(): number {
         this.itemId += 1;
         return this.itemId;
     }
 
-    addItem(callback: () => void, errorCallback?: (error: Error) => void) {
+    addItem(callback: () => void, errorCallback?: (error: any) => void): void {
         const item: QueueItem = {
             id: this.nextItemId(),
-            callback, errorCallback
+            callback,
+            errorCallback,
         };
         this.queue.push(item);
         this.start();
     }
 }
-

@@ -15,12 +15,10 @@ function getProp(obj, propPath, defaultValue) {
     } else if (!(propPath instanceof Array)) {
         throw new TypeError('Invalid type for key: ' + typeof propPath);
     }
-    const propStack = [];
     for (let i = 0; i < propPath.length; i += 1) {
         if (obj === undefined || typeof obj !== 'object' || obj === null) {
             return defaultValue;
         }
-        propStack.push(propPath[i]);
         obj = obj[propPath[i]];
     }
     if (obj === undefined) {
@@ -277,14 +275,13 @@ class Task {
                 return params[name];
             })
                 .filter((value) => {
-                    return typeof value === 'undefined' ? false : true;
+                    return typeof value !== 'undefined';
                 });
             if (paramValue.length <= 1) {
                 paramValue = paramValue[0];
             } else {
                 throw new Error(`For action task ${taskDef.action}, too many params matching ${paramName.join(',')}`);
             }
-
         } else {
             throw new Error(`Action task ${taskDef.action} param needs to be a string or array`);
         }
@@ -296,9 +293,8 @@ class Task {
                 throw new Error(`Action task ${taskDef.action} does not have param named "${paramName}"`);
             }
         }
-
         if (typeof paramValue === 'string') {
-            paramValue = this.interpValue(paramValue);
+            return this.interpValue(paramValue);
         }
         return paramValue;
     }
@@ -311,7 +307,6 @@ class Task {
             throw new Error('Loop context undefined: ' + taskDef.loop);
         }
         if (!Array.isArray(contextArray)) {
-
             throw new Error('Sorry, context is not an array!');
         }
 
@@ -368,10 +363,21 @@ class Task {
                 };
             case 'keys':
                 return () => {
-                    const keys = this.getParam(taskDef, 'keys');
-                    keys.forEach((key) => {
-                        browser.keys(key);
-                    });
+                    const keys = this.getParam(taskDef, 'keys', false);
+                    if (keys) {
+                        keys.forEach((key) => {
+                            browser.keys(key);
+                        });
+                    } else {
+                        const string = this.getParam(taskDef, 'string', false);
+                        if (string) {
+                            string.split('').forEach((key) => {
+                                browser.keys(key);
+                            });
+                        } else {
+                            throw new Error('"keys" action requires either a param of either "keys" or "string"');
+                        }
+                    }
                 };
             case 'switchToFrame':
             case 'switchToPluginIFrame':
@@ -482,7 +488,8 @@ class Task {
                 if (Number.isNaN(value)) {
                     return false;
                 }
-                return utils.isValidNumber(value, this.getParam(taskDef, 'number'));
+                const param = this.getParam(taskDef, 'number');
+                return utils.isValidNumber(value, param);
             };
         case 'forCount':
         case 'forElementCount':
@@ -493,7 +500,8 @@ class Task {
                     }
                     const els = browser.$$(taskDef.resolvedSelector);
                     const count = els.length;
-                    return utils.isValidNumber(count, this.getParam(taskDef, 'count'));
+                    const param = this.getParam(taskDef, 'count');
+                    return utils.isValidNumber(count, param);
                 } catch (ex) {
                     return false;
                 }
@@ -503,10 +511,7 @@ class Task {
                 try {
                     browser.switchToFrame(null);
                     browser.switchToFrame(browser.$('[data-k-b-testhook-iframe="plugin-iframe"]'));
-                    if (!browser.$(taskDef.resolvedSelector).isExisting()) {
-                        return false;
-                    }
-                    return true;
+                    return browser.$(taskDef.resolvedSelector).isExisting();
                 } catch (ex) {
                     return false;
                 }
@@ -553,8 +558,7 @@ class Task {
         }
 
         const template = handlebars.compile(value);
-        const result = template(this.context);
-        return result;
+        return template(this.context);
     }
 
     buildAttribute(element) {
@@ -582,9 +586,20 @@ class Task {
         const elementType = element.elementType || '';
 
         if (element.type) {
-            if (element.type === 'raw') {
+            switch (element.type) {
+            case 'raw':
                 return `${elementType}[${element.name}="${this.interpValue(element.value)}"]${nth}`;
-            } else {
+            case 'id':
+                return `#${this.interpValue(element.value)}`;
+            case 'testid':
+                return `[data-testid="${this.interpValue(element.value)}"]`;
+            case 'class':
+                return `.${element.value.split(/\s+/).join('.')}`;
+            case 'tag':
+                return `${this.interpValue(element.value)}`;
+            case 'selector':
+                return element.selector;
+            default:
                 return `${elementType}[data-k-b-testhook-${element.type}="${this.interpValue(element.value)}"]${nth}`;
             }
         } else if (elementType) {
@@ -598,13 +613,13 @@ class Task {
     }
 
     buildSelector(path) {
-        const selector = path
+        return path
             .map((element) => {
                 return this.buildAttribute(element);
             })
             .join(' ');
-        return selector;
     }
+
     makeSelector(selector) {
         if (selector instanceof Array) {
             selector = {
@@ -623,8 +638,7 @@ class Task {
             fullPath = selector.path;
             break;
         }
-        const sel = this.buildSelector(fullPath);
-        return sel;
+        return this.buildSelector(fullPath);
     }
 }
 

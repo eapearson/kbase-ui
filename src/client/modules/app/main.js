@@ -6,6 +6,7 @@ define([
     '../lib/utils',
 
     'json!config/plugins.json',
+    'json!config/applets.json',
     'json!config/config.json',
     'json!deploy/config.json',
 
@@ -14,16 +15,17 @@ define([
     'css!font_awesome',
     'css!app/styles/kb-bootstrap',
     'css!app/styles/kb-ui'
-], function (
+], (
     Promise,
-    Uuid,
+    {v4: uuidv4},
     Hub,
     props,
     utils,
     pluginsConfig,
+    appletsConfig,
     appConfigBase,
     deployConfig
-) {
+) => {
 
     // Set up global configuration of bluebird promises library.
     // This is the first invocation of bluebird.
@@ -35,7 +37,7 @@ define([
 
     // establish a global root namespace upon which we can
     // hang data, which at this time is just the app.
-    const globalRef = new Uuid(4).format();
+    const globalRef = uuidv4();
     const global = (window[globalRef] = new props.Props());
 
     function start() {
@@ -56,7 +58,8 @@ define([
         // extracted from the services.
         // TODO: we can get rid of this malarky if we can remove non-core
         // services from the services config.
-        var coreServices = Object.entries(mergedConfig.services)
+
+        mergedConfig.coreServices = Object.entries(mergedConfig.services)
             .filter(([, serviceConfig]) => {
                 return serviceConfig.coreService;
             })
@@ -68,7 +71,6 @@ define([
                     version: serviceConfig.version
                 };
             });
-        mergedConfig.coreServices = coreServices;
 
         // Expand aliases.
         // This simply makes a new entry in the services object for
@@ -83,7 +85,7 @@ define([
                     serviceConfig.aliases.forEach((alias) => {
                         if (mergedConfig.services[alias]) {
                             throw new Error(
-                                'Service alias for ' + serviceKey + ' already in use: ' + alias
+                                `Service alias for ${  serviceKey  } already in use: ${  alias}`
                             );
                         }
                         mergedConfig.services[alias] = serviceConfig;
@@ -100,6 +102,11 @@ define([
             plugins.set(key, value);
         });
 
+        const applets = new Map();
+        Object.entries(appletsConfig.applets).map(([key, value]) => {
+            applets.set(key, value);
+        });
+
         const app = new Hub({
             appConfig: mergedConfig,
             nodes: {
@@ -107,6 +114,7 @@ define([
                     selector: '#root'
                 }
             },
+            applets,
             plugins,
             services: mergedConfig.ui.services
         });

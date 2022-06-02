@@ -13,7 +13,7 @@ function loadJSONFile(file) {
 
 function loadYAMLFile(file) {
     var contents = fs.readFileSync(file, 'utf8');
-    return yaml.safeLoad(contents);
+    return yaml.load(contents);
 }
 
 function extend(path, elements) {
@@ -68,6 +68,7 @@ function isValidNumber(theNumber, comparisonSpec) {
         case 'lessThanOrEqual':
             return theNumber <= comparisonValue;
         case 'exact':
+        case 'eq':
         case 'equals':
         case 'equal':
             return theNumber === comparisonValue;

@@ -18,13 +18,12 @@ none
 
 ### IMPROVEMENTS
 
-Migrate build from travic-ci to github actions (in progress)
-auth2-client: text update (usage -> user)
+- UIP-6: replace GHA workflows with improved, KBase-compliant workflows
 
 ### FIXES
 
 none
 
-### DEPENDENCIES
+### MAJOR DEPENDENCY CHANGES
 
 none

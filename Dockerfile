@@ -1,30 +1,32 @@
 # ------------------------------
 # The build image
 # ------------------------------
-FROM alpine:3.12 as builder
+FROM alpine:3.15 as builder
 
 # add deps for building kbase-ui
 RUN apk upgrade --update-cache --available && \
-    apk add --update --no-cache bash chromium g++ git make nodejs yarn python2 && \
+    apk add --update --no-cache bash chromium g++ git make nodejs npm python3 && \
     mkdir -p /kb
 
 COPY ./package.json /kb
+COPY ./package-lock.json /kb
 WORKDIR /kb
-RUN yarn install --no-lockfile
+RUN npm install
 
 COPY . /kb
 
-ARG BUILD
+ARG BUILD_CONFIG
 
 # Build kbase-ui
-RUN make build config=$BUILD
+RUN echo "Using build arg $BUILD_CONFIG"
+RUN make build config="$BUILD_CONFIG"
 
 LABEL stage=intermediate
 
 # ------------------------------
 # The product image
 # ------------------------------
-FROM alpine:3.12
+FROM alpine:3.15
 
 RUN apk upgrade --update-cache --available && \
     apk add --update --no-cache bash ca-certificates nginx && \
@@ -54,7 +56,7 @@ COPY --from=builder /kb/deployment/templates /kb/deployment/templates
 # Deployment-time scripts
 COPY --from=builder /kb/deployment/scripts /kb/deployment/scripts
 
-# Need to include the integration tests since otherwise we need a local build 
+# Need to include the integration tests since otherwise we need a local build
 # to pick them up.
 COPY --from=builder /kb/build/test /kb/deployment/services/kbase-ui/test
 
@@ -65,7 +67,7 @@ LABEL org.label-schema.build-date=$BUILD_DATE \
     org.label-schema.vcs-ref=$COMMIT \
     org.label-schema.schema-version="1.0.0-rc1" \
     us.kbase.vcs-branch=$BRANCH  \
-    us.kbase.vcs-tag=$TAG \ 
+    us.kbase.vcs-tag=$TAG \
     maintainer="Steve Chan sychan@lbl.gov"
 
 # Run as a regular user, not root.

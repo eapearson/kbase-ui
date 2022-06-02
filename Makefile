@@ -26,8 +26,8 @@ KARMA			= ./node_modules/.bin/karma
 
 # The config used to control the build (build task)
 # dev, ci, prod
-# Defaults to ci
-build           = dev
+# Defaults to dev
+config          = dev
 
 # The deploy environment; used by dev-time image runners
 # dev, ci, next, appdev, prod
@@ -48,12 +48,12 @@ host = ci
 service = selenium-standalone
 
 # A kbase token; used in testing tasks
-token = 
+token =
 
 # functions
 
 # check_defined variable-name message
-# Ensures that the given variable 'variable-name' is defined; if not 
+# Ensures that the given variable 'variable-name' is defined; if not
 # prints 'message' and the process exits with 1.
 # thanks https://stackoverflow.com/questions/10858261/abort-makefile-if-variable-not-set
 check_defined = \
@@ -61,7 +61,7 @@ check_defined = \
         $(call __check_defined,$1,$(strip $(value 2)))))
 __check_defined = \
     $(if $(value $1),, \
-        $(error Undefined $1$(if $2, ($2))$(if $(value @), \
+        $(error Undefined "$1"$(if $2, ($2))$(if $(value @), \
                 required by target `$@')))
 
 .PHONY: all test build docs
@@ -88,27 +88,27 @@ setup-dirs:
 
 node_modules:
 	@echo "> Installing build and test tools."
-	yarn install --no-lockfile
+	npm install --no-lockfile
 
 setup: setup-dirs
 
 init: setup node_modules
 
-quality: 
+quality:
 	@echo "> Checking code quality."
-	yarn quality
+	npm run quality
 
 compile:
 	@echo "> Compiling TypeScript files."
-	yarn compile
+	npm run compile
 
 
 # Perform the build. Build scnearios are supported through the config option
 # which is passed in like "make build build=ci"
 build: quality clean-build compile
-	@:$(call check_defined, build, "the build configuration: defaults to 'dev'")
+	@:$(call check_defined, config, "the build configuration: defaults to 'dev'")
 	@echo "> Building."
-	yarn build --config $(build)
+	npm run build -- --config $(config)
 
 docker-network:
 	@:$(call check_defined, net, "the docker custom network: defaults to 'kbase-dev'")
@@ -121,7 +121,7 @@ docker-ignore:
 	@$(TOPDIR)/node_modules/.bin/dockerignore
 
 # Build the docker image, assumes that make init and make build have been done already
-docker-image: 
+docker-image:
 	@echo "> Building docker image for this branch; assuming we are on Travis CI"
 	@bash $(TOPDIR)/deployment/tools/build-travis.bash
 
@@ -131,7 +131,7 @@ fake-travis-build:
 	@bash $(TOPDIR)/tools/docker/build-travis-fake.bash
 
 
-docker-compose-override: 
+docker-compose-override:
 	@echo "> Creating docker compose override..."
 	@echo "> With options:"
 	@echo "> plugins: $(plugins)"
@@ -139,6 +139,7 @@ docker-compose-override:
 	@echo "> libraries: $(libraries)"
 	@echo "> paths: $(paths)"
 	@echo "> local-narrative: $(local-narrative)"
+	@echo "> local-navigator: $(local-navigator)"
 	@echo "> dynamic-services: $(dynamic-services)"
 	$(eval cmd = node $(TOPDIR)/tools/js/build-docker-compose-override.js $(env) \
 	  $(foreach p,$(plugins),--plugin $(p)) \
@@ -149,15 +150,17 @@ docker-compose-override:
 	  $(foreach d,$(dynamic-services),--dynamic_services $d) \
 	  $(foreach s,$(services),--services $s) \
 	  $(if $(findstring t,$(local-docs)),--local_docs) \
-	  $(if $(findstring t,$(local-narrative)),--local_narrative))
+	  $(if $(findstring t,$(local-narrative)),--local_narrative) \
+	  $(if $(findstring t,$(local-navigator)),--local_navigator))
 	@echo "> Issuing: $(cmd)"
 	$(cmd)
 
 docker-compose-up: docker-network docker-compose-override
-	@:$(call check_defined, build, "the kbase-ui build config: defaults to 'dev'")
+	@:$(call check_defined, config, "the kbase-ui build config: defaults to 'dev'")
 	@:$(call check_defined, env, "the runtime (deploy) environment: defaults to 'dev'")
 	@echo "> Building and running docker image for development"
-	$(eval cmd = cd dev; BUILD=$(build) DEPLOY_ENV=$(env) docker-compose up \
+	@echo ">   BUILD_CONFIG=$(config) DEPLOY_ENV=$(env)"
+	$(eval cmd = cd dev; BUILD_CONFIG=$(config) DEPLOY_ENV=$(env) docker-compose up \
 		$(if $(findstring t,$(build-image)),--build))
 	@echo "> Issuing $(cmd)"
 	$(cmd)
@@ -167,7 +170,7 @@ docker-compose-up: docker-network docker-compose-override
 
 docker-compose-clean:
 	@echo "> Cleaning up after docker compose..."
-	@cd dev; BUILD=$(build) DEPLOY_ENV=$(env) docker-compose rm -f -s
+	@cd dev; BUILD=$(config) DEPLOY_ENV=$(env) docker-compose rm -f -s
 	@echo "> If necessary, Docker containers have been stopped and removed"
 
 docker-network-clean:
@@ -193,25 +196,22 @@ unit-tests:
 # Filter test files to focus on just selected ones.
 # e.g. dataview/ will match just test files which include a dataview path element, effectively
 # selecting just the dataview plugin tests.
-focus = 
-blur = 
+focus =
+blur =
 
 integration-tests:
 	@:$(call check_defined, env, first component of hostname and kbase environment)
 	@:$(call check_defined, browser, the browser to test against)
 	@:$(call check_defined, service, the testing service )
-	@:$(call check_defined, token, the testing user auth tokens )
-	ENV="$(env)" BROWSER="$(browser)" SERVICE_USER="$(user)" SERVICE_KEY="$(key)" SERVICE="$(service)" TOKEN="${token}" FOCUS="${focus}" BLUR="${blur}" $(GRUNT) webdriver:service --env=$(env)
+	@:$(call check_defined, token, the kbaseuitest (test user) auth token)
+	ENV="$(env)" BROWSER="$(browser)" SERVICE_USER="$(user)" SERVICE_KEY="$(key)" SERVICE="$(service)" TOKEN="${token}" FOCUS="${focus}" BLUR="${blur}" npx wdio run ./test/wdio.conf.service.js --env=$(env)
 
-travis-tests:
-	$(GRUNT) test-travis
 
-test: unit-tests
-
-test-travis: unit-tests travis-tests
+test: 
+	@echo Tests from makefile are disabled for now
 
 # Clean slate
-clean: clean-docs
+clean: clean-docs clean-ts
 	$(GRUNT) clean-all
 
 clean-temp:
@@ -224,18 +224,11 @@ clean-docs:
 	@rm -rf ./docs/book/_book
 	@rm -rf ./docs/node_modules
 
+clean-ts:
+	@npm run clean-ts
+
 # If you need more clean refinement, please see Gruntfile.js, in which you will
 # find clean tasks for each major build artifact.
-
-docs:
-	cd docs; \
-	yarn install --no-lockfile; \
-	./node_modules/.bin/gitbook build ./book
-
-docs-viewer: docs
-	cd docs; \
-	(./node_modules/.bin/wait-on -t 10000 http://localhost:4000 && ./node_modules/.bin/opn http://localhost:4000 &); \
-	./node_modules/.bin/gitbook serve ./book
 
 # git -c http.sslVerify=false clone https://oauth2:s5TDQnKk4kpHXCVdUNfh@gitlab.kbase.lbl.gov:1443/devops/kbase_ui_config.git
 get-gitlab-config:
@@ -244,7 +237,7 @@ get-gitlab-config:
 
 clean-gitlab-config:
 	rm -rf dev/gitlab-config
-	
+
 dev-cert:
 	bash tools/make-dev-cert.sh
 

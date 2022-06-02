@@ -11,13 +11,10 @@
             "dynamicServiceProxies": [{{ range $i, $v := split .Env.dynamic_service_proxies "," }}{{if $v }}{{ if $i }}, {{end}}"{{ $v }}"{{ end }}{{ end }}]
         }
     },
-    "ui": {       
+    "ui": {
         "services": {
 			"connection": {},
 			"coreService": {},
-			"heartbeat": {
-                "interval": 500
-            },
 			"instrumentation": {},
 			"notification": {},
 			"route": {
@@ -71,6 +68,12 @@
 										"DevToken"
 									]
 								}, {
+									"id": "about-plugins",
+									"auth": true,
+									"allowRoles": [
+										"DevToken"
+									]
+								}, {
 									"id": "developer",
 									"auth": true,
 									"allowRoles": [
@@ -88,15 +91,17 @@
                                     "allowRoles": [
                                         "DevToken"
                                     ]
-                                }, {
-									"id": "search2",
-									"auth": true,
-									"allowRoles": [
-										"DevToken"
-									]
-                            }],
+                                }],
 							"help": [{
 										"id": "about",
+										"auth": false
+									},
+                                    {
+										"id": "about-kbase",
+										"auth": false
+									},{
+
+										"id": "docs",
 										"auth": false
 									},
 									{
@@ -114,28 +119,34 @@
 									},
 									{
 										"id": "organizations",
-										"auth": true
+										"auth": true,
+										"tooltip": "Browse, search, join and manage KBase Organizations"
 									},
 									{
 										"id": "catalog",
-										"auth": false
+										"auth": false,
+										"tooltip": "Browse and search a catalog of KBase Narrative Apps and Workspace Types"
 									},
 									{
 										"id": "search",
-										"auth": true
+										"auth": true,
+										"tooltip": "Search KBase data objects in Narratives and Reference Workspaces"
 									},
 									{
 										"id": "jobbrowser",
 										"label": "Jobs",
-										"auth": true
+										"auth": true,
+										"tooltip": "Browse and manage jobs spawned in your Narratives"
 									},
 									{
 										"id": "account",
-										"auth": true
+										"auth": true,
+										"tooltip": "Manage your KBase Account"
 									},
 									{
 										"id": "feeds",
-										"auth": true
+										"auth": true,
+										"tooltip": "Browse and manage notifications from your KBase Feeds"
 									}
                             ]},
                         "disabled": [{{ range $i, $v := split .Env.ui_services_menu_sidebar_disabled "," }}{{if $v }}{{ if $i }}, {{end}}"{{ $v }}"{{ end }}{{ end }}]
@@ -174,8 +185,8 @@
 					"title": "Lineage driven by Relation Engine"
 				},
                 {
-                    "id": "linked-samples",
-                    "title": "Samples linked to objects via the Sample Service"
+                    "id": "object-link-to-term",
+                    "title": "Data objects linked to ontology terms"
                 },
                 {
                     "id": "redirect-to-www",
@@ -334,20 +345,11 @@
 			"url": "https://{{ default .Env.deploy_hostname "localhost" }}/{{ default .Env.deploy_services_kbasedataimport_path "services/data_import_export" }}",
 			"name": "Data Import Export"
 		},
-		"KBaseSearchEngine": {
-			"aliases": [
-				"search"
-			],
-			"url": "https://{{ default .Env.deploy_hostname "localhost" }}/{{ default .Env.deploy_services_kbasesearchengine_path "services/searchapi" }}",
-			"name": "KBase Search Engine",
+		"SampleService": {
+			"url": "https://{{ default .Env.deploy_hostname "localhost" }}/{{ default .Env.deploy_services_sampleservice_path "services/sampleservice" }}",
+			"name": "Sample Service",
 			"coreService": true,
-			"type": "jsonrpc",
-			"version": {
-				"method": "status",
-				"propertyPath": "version",
-				"minimum": "0.2.0",
-				"required": "^0.2.0"
-			}
+			"type": "jsonrpc"
 		},
 		"ServiceWizard": {
 			"aliases": [
@@ -388,7 +390,7 @@
 				"semverNotImplemented": true
 			}
 		},
-       
+
         "SearchAPI2": {
             "aliases": [],
             "url": "https://{{ default .Env.deploy_hostname "localhost" }}/{{ default .Env.deploy_services_searchapi2_path "services/searchapi2/rpc" }}",
@@ -401,10 +403,10 @@
          "SearchAPI2Legacy": {
             "aliases": [],
             "module": "KBaseSearchEngine",
-            "url": "https://{{ default .Env.deploy_hostname "localhost" }}/{{ default .Env.deploy_services_searchapi2_path "services/searchapi2/legacy" }}",
+            "url": "https://{{ default .Env.deploy_hostname "localhost" }}/{{ default .Env.deploy_services_searchapi2_legacy_path "services/searchapi2/legacy" }}",
 			"name": "Search Engine",
 			"coreService": true,
-			"type": "jsonrpc2",
+			"type": "jsonrpc",
 			"version": false
         },
         "execution_engine2": {
@@ -429,7 +431,7 @@
 			],
 			"url": "https://{{ default .Env.deploy_hostname "localhost" }}/{{ default .Env.deploy_services_staging_path "services/staging_service" }}"
 		}
-        
+
     },
     "dynamicServices": {
         "JobBrowserBFF": {

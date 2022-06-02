@@ -9,6 +9,7 @@
 define([
     'preact',
     'htm',
+    'lib/appletManager',
     'lib/pluginManager',
     'lib/appServiceManager',
     'lib/kbaseServiceManager',
@@ -18,11 +19,12 @@ define([
 ], (
     preact,
     htm,
-    {PluginManager},
-    {AppServiceManager},
+    { AppletManager },
+    { PluginManager },
+    { AppServiceManager },
     kbaseServiceManager,
-    {Runtime},
-    {Messenger},
+    { Runtime },
+    { Messenger },
     MainWindow
 ) => {
     const html = htm.bind(preact.h);
@@ -37,7 +39,7 @@ define([
     fallback error handling, and a simple set of predefined root nodes.
     The rest of the web app is crafted out of the plugins which are loaded
     from the configuration.
-    Much of what plugin loading involves is interation with services, which is
+    Much of what plugin loading involves is interaction with services, which is
     usually literally providing a configuration object to the service and allowing
     the service to do its thing.
     This makes for a very small core, in which nearly all of the functionality is
@@ -66,6 +68,7 @@ define([
     return class App {
         constructor(params) {
             this.plugins = params.plugins;
+            this.applets = params.applets;
             this.services = params.services;
             this.nodes = params.nodes;
 
@@ -75,7 +78,7 @@ define([
             // calling code. If this node is absent, we simply fail here.
             this.rootNode = document.querySelector(this.nodes.root.selector);
             if (!this.rootNode) {
-                throw new Error('Cannot set root node for selector ' + this.nodes.root.selector);
+                throw new Error(`Cannot set root node for selector ${this.nodes.root.selector}`);
             }
 
             // Events
@@ -99,6 +102,10 @@ define([
             });
 
             this.pluginManager = new PluginManager({
+                runtime: this.runtime
+            });
+
+            this.appletManager = new AppletManager({
                 runtime: this.runtime
             });
 
@@ -175,6 +182,9 @@ define([
                     });
                 })
                 .then(() => {
+                    return this.appletManager.installApplets(this.applets);
+                })
+                .then(() => {
                     return this.pluginManager.installPlugins(this.plugins);
                 })
                 .then(() => {
@@ -185,6 +195,6 @@ define([
                 });
         }
 
-        stop() {}
+        stop() { }
     };
 });
